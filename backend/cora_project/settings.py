@@ -57,39 +57,46 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cora_project.wsgi.application'
 
 
-def _env(key, default=''):
-    """Lit une variable d'environnement en supprimant les guillemets parasites."""
-    val = os.getenv(key, default)
-    return val.strip().strip('"').strip("'") or default
+import sys
+import urllib.parse as _urlparse
 
-# DJANGO_DB_URL est un nom custom que Railway n'écrase pas (contrairement à PG* et DATABASE_URL)
-_custom_url = _env('DJANGO_DB_URL')
+# DEBUG: affiche les variables lues par Railway dans les logs
+_raw_django_db = os.environ.get('DJANGO_DB_URL', '')
+_raw_database_url = os.environ.get('DATABASE_URL', '')
+print(f"[CORA] DJANGO_DB_URL present={bool(_raw_django_db)} val={_raw_django_db[:40]!r}", file=sys.stderr, flush=True)
+print(f"[CORA] DATABASE_URL present={bool(_raw_database_url)} val={_raw_database_url[:40]!r}", file=sys.stderr, flush=True)
 
-if _custom_url:
-    import urllib.parse
-    _u = urllib.parse.urlparse(_custom_url)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME':     _u.path.lstrip('/') or 'railway',
-            'USER':     _u.username or 'postgres',
-            'PASSWORD': urllib.parse.unquote(_u.password or ''),
-            'HOST':     _u.hostname or 'localhost',
-            'PORT':     str(_u.port or 5432),
-            'CONN_MAX_AGE': 600,
-        }
+def _parse_db_url(url):
+    url = url.strip().strip('"').strip("'")
+    u = _urlparse.urlparse(url)
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME':     u.path.lstrip('/') or 'railway',
+        'USER':     u.username or 'postgres',
+        'PASSWORD': _urlparse.unquote(u.password or ''),
+        'HOST':     u.hostname or 'localhost',
+        'PORT':     str(u.port or 5432),
+        'CONN_MAX_AGE': 600,
     }
+
+if _raw_django_db:
+    DATABASES = {'default': _parse_db_url(_raw_django_db)}
+    print(f"[CORA] DB HOST={DATABASES['default']['HOST']}", file=sys.stderr, flush=True)
+elif _raw_database_url:
+    DATABASES = {'default': _parse_db_url(_raw_database_url)}
+    print(f"[CORA] DB HOST={DATABASES['default']['HOST']}", file=sys.stderr, flush=True)
 else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': _env('DB_NAME', 'coradb'),
-            'USER': _env('DB_USER', 'corauser'),
-            'PASSWORD': _env('DB_PASSWORD', 'corapassword'),
-            'HOST': _env('DB_HOST', 'localhost'),
-            'PORT': _env('DB_PORT', '5432'),
+            'NAME': os.environ.get('DB_NAME', 'coradb'),
+            'USER': os.environ.get('DB_USER', 'corauser'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'corapassword'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
         }
     }
+    print("[CORA] DB using local fallback (localhost)", file=sys.stderr, flush=True)
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
