@@ -57,14 +57,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cora_project.wsgi.application'
 
 
-import sys
 import urllib.parse as _urlparse
-
-# DEBUG: affiche les variables lues par Railway dans les logs
-_raw_django_db = os.environ.get('DJANGO_DB_URL', '')
-_raw_database_url = os.environ.get('DATABASE_URL', '')
-print(f"[CORA] DJANGO_DB_URL present={bool(_raw_django_db)} val={_raw_django_db[:40]!r}", file=sys.stderr, flush=True)
-print(f"[CORA] DATABASE_URL present={bool(_raw_database_url)} val={_raw_database_url[:40]!r}", file=sys.stderr, flush=True)
 
 def _parse_db_url(url):
     url = url.strip().strip('"').strip("'")
@@ -79,12 +72,9 @@ def _parse_db_url(url):
         'CONN_MAX_AGE': 600,
     }
 
-if _raw_django_db:
-    DATABASES = {'default': _parse_db_url(_raw_django_db)}
-    print(f"[CORA] DB HOST={DATABASES['default']['HOST']}", file=sys.stderr, flush=True)
-elif _raw_database_url:
-    DATABASES = {'default': _parse_db_url(_raw_database_url)}
-    print(f"[CORA] DB HOST={DATABASES['default']['HOST']}", file=sys.stderr, flush=True)
+_db_url = os.environ.get('DJANGO_DB_URL') or os.environ.get('DATABASE_URL')
+if _db_url:
+    DATABASES = {'default': _parse_db_url(_db_url)}
 else:
     DATABASES = {
         'default': {
@@ -96,7 +86,6 @@ else:
             'PORT': os.environ.get('DB_PORT', '5432'),
         }
     }
-    print("[CORA] DB using local fallback (localhost)", file=sys.stderr, flush=True)
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
