@@ -1,7 +1,7 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-import dj_database_url
+import urllib.parse
 
 load_dotenv()
 
@@ -58,22 +58,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cora_project.wsgi.application'
 
 
-# Railway fournit DATABASE_URL ou les variables PG* ; en local on utilise DB_*
+# Railway fournit DATABASE_URL ; en local on utilise les variables DB_*
 _DATABASE_URL = os.getenv('DATABASE_URL')
-_PG_HOST = os.getenv('PGHOST') or os.getenv('RAILWAY_TCP_PROXY_DOMAIN')
 
 if _DATABASE_URL:
-    DATABASES = {'default': dj_database_url.parse(_DATABASE_URL, conn_max_age=600)}
-elif _PG_HOST:
-    # Fallback sur les variables PG* que Railway injecte aussi
+    # Parse manuel avec urllib (pas de dépendance externe)
+    _url = urllib.parse.urlparse(_DATABASE_URL)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('PGDATABASE', os.getenv('RAILWAY_PG_DATABASE', 'railway')),
-            'USER': os.getenv('PGUSER', os.getenv('RAILWAY_PG_USER', 'postgres')),
-            'PASSWORD': os.getenv('PGPASSWORD', os.getenv('RAILWAY_PG_PASSWORD', '')),
-            'HOST': _PG_HOST,
-            'PORT': os.getenv('PGPORT', '5432'),
+            'NAME': _url.path.lstrip('/'),
+            'USER': _url.username or '',
+            'PASSWORD': urllib.parse.unquote(_url.password or ''),
+            'HOST': _url.hostname or 'localhost',
+            'PORT': str(_url.port or 5432),
+            'CONN_MAX_AGE': 600,
         }
     }
 else:
