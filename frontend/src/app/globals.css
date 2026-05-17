@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  body {
+    background-color: #FBF5E8;
+    color: #2C2416;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24;
+  }
+
+  .section-title {
+    @apply font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-dark mb-4;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-stone/80 font-light mb-12 max-w-2xl;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-roman text-white px-6 py-3 rounded-none
+           font-semibold tracking-wide uppercase text-sm
+           hover:bg-roman-dark transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 border-2 border-gold text-stone-dark px-6 py-3
+           font-semibold tracking-wide uppercase text-sm
+           hover:bg-gold hover:text-white transition-colors duration-200;
+  }
+
+  .card-heritage {
+    @apply bg-white border border-stone/20 shadow-sm hover:shadow-md transition-shadow duration-300;
+  }
+
+  .period-badge {
+    @apply inline-block bg-roman/10 text-roman text-xs font-semibold px-3 py-1 uppercase tracking-widest;
+  }
+}
+
+/* Timeline */
+.timeline-line {
+  position: relative;
+}
+.timeline-line::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #C9A84C, #8B1A1A);
+  transform: translateX(-50%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #F5ECD7; }
+::-webkit-scrollbar-thumb { background: #8B7355; border-radius: 3px; }
