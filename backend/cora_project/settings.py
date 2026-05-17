@@ -62,16 +62,34 @@ def _env(key, default=''):
     val = os.getenv(key, default)
     return val.strip().strip('"').strip("'") or default
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME':     _env('PGDATABASE', _env('DB_NAME', 'railway')),
-        'USER':     _env('PGUSER',     _env('DB_USER', 'postgres')),
-        'PASSWORD': _env('PGPASSWORD', _env('DB_PASSWORD', '')),
-        'HOST':     _env('PGHOST',     _env('DB_HOST', 'postgres.railway.internal')),
-        'PORT':     _env('PGPORT',     _env('DB_PORT', '5432')),
+# DJANGO_DB_URL est un nom custom que Railway n'écrase pas (contrairement à PG* et DATABASE_URL)
+_custom_url = _env('DJANGO_DB_URL')
+
+if _custom_url:
+    import urllib.parse
+    _u = urllib.parse.urlparse(_custom_url)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME':     _u.path.lstrip('/') or 'railway',
+            'USER':     _u.username or 'postgres',
+            'PASSWORD': urllib.parse.unquote(_u.password or ''),
+            'HOST':     _u.hostname or 'localhost',
+            'PORT':     str(_u.port or 5432),
+            'CONN_MAX_AGE': 600,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _env('DB_NAME', 'coradb'),
+            'USER': _env('DB_USER', 'corauser'),
+            'PASSWORD': _env('DB_PASSWORD', 'corapassword'),
+            'HOST': _env('DB_HOST', 'localhost'),
+            'PORT': _env('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
