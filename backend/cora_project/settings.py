@@ -1,7 +1,6 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-import urllib.parse
 
 load_dotenv()
 
@@ -58,34 +57,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cora_project.wsgi.application'
 
 
-# Railway fournit DATABASE_URL ; en local on utilise les variables DB_*
-_DATABASE_URL = os.getenv('DATABASE_URL')
-
-if _DATABASE_URL:
-    # Parse manuel avec urllib (pas de dépendance externe)
-    _url = urllib.parse.urlparse(_DATABASE_URL)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': _url.path.lstrip('/'),
-            'USER': _url.username or '',
-            'PASSWORD': urllib.parse.unquote(_url.password or ''),
-            'HOST': _url.hostname or 'localhost',
-            'PORT': str(_url.port or 5432),
-            'CONN_MAX_AGE': 600,
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('PGDATABASE', os.getenv('DB_NAME', 'railway')),
+        'USER': os.getenv('PGUSER', os.getenv('DB_USER', 'postgres')),
+        'PASSWORD': os.getenv('PGPASSWORD', os.getenv('DB_PASSWORD', '')),
+        'HOST': os.getenv('PGHOST', os.getenv('DB_HOST', 'localhost')),
+        'PORT': os.getenv('PGPORT', os.getenv('DB_PORT', '5432')),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'coradb'),
-            'USER': os.getenv('DB_USER', 'corauser'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'corapassword'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
-        }
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
