@@ -57,14 +57,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cora_project.wsgi.application'
 
 
+def _env(key, default=''):
+    """Lit une variable d'environnement en supprimant les guillemets parasites."""
+    val = os.getenv(key, default)
+    return val.strip().strip('"').strip("'") or default
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', os.getenv('DB_NAME', 'railway')),
-        'USER': os.getenv('PGUSER', os.getenv('DB_USER', 'postgres')),
-        'PASSWORD': os.getenv('PGPASSWORD', os.getenv('DB_PASSWORD', '')),
-        'HOST': os.getenv('PGHOST', os.getenv('DB_HOST', 'localhost')),
-        'PORT': os.getenv('PGPORT', os.getenv('DB_PORT', '5432')),
+        'NAME':     _env('PGDATABASE', _env('DB_NAME', 'railway')),
+        'USER':     _env('PGUSER',     _env('DB_USER', 'postgres')),
+        'PASSWORD': _env('PGPASSWORD', _env('DB_PASSWORD', '')),
+        'HOST':     _env('PGHOST',     _env('DB_HOST', 'postgres.railway.internal')),
+        'PORT':     _env('PGPORT',     _env('DB_PORT', '5432')),
     }
 }
 
